@@ -20,6 +20,10 @@ ignite-brief/
 │   └── config.example.js     plantilla — NO se commitea el config.js real
 ├── scripts/generate-config.js ← genera public/config.js en cada build, desde env vars
 ├── supabase/schema.sql        ← tabla + políticas RLS, correr una sola vez en Supabase
+├── n8n/                        ← automatización opcional: brief → Google Doc/PDF en Drive
+│   ├── Brief-Campana-Ignite-Supabase-Webhook.json
+│   ├── Plantilla-Google-Docs-Brief-Campana.md
+│   └── README-Instalacion.md
 ├── package.json                "build" corre generate-config.js
 ├── vercel.json / netlify.toml  build command + output directory
 ```
@@ -57,6 +61,10 @@ npm run dev
 ```
 `public/config.js` está en `.gitignore` — nunca se commitea.
 
+## Automatización opcional: generar documento por cada brief
+
+`n8n/` tiene un workflow que, por cada brief nuevo, copia una plantilla de Google Docs, la completa y guarda un PDF en una carpeta de Drive — sin tocar el formulario ni el panel. Se dispara vía un **Database Webhook de Supabase** (evento Insert en `campaign_briefs`), no desde el frontend. Ver [`n8n/README-Instalacion.md`](n8n/README-Instalacion.md) para el paso a paso. Es completamente opcional: el formulario y el panel funcionan igual sin este workflow activo.
+
 ## Decisiones de diseño (resumen — ver la spec para el detalle)
 - **Sin framework:** no hace falta lógica de servidor propia (las políticas de Supabase resuelven permisos), así que HTML/CSS/JS estático es suficiente y evita mantenimiento de dependencias.
 - **Supabase, no una API propia:** mismo patrón que `specs/003-dashboard-consumos.md` (Postgres + RLS en vez de armar auth/almacenamiento a mano).
@@ -64,3 +72,5 @@ npm run dev
 
 ## Historial
 - **2026-09-13 — V1 (MVP):** primera versión, a partir de `Brief_Campaña_ignite_ops_Taquion_ES.pdf` (plantilla genérica de brief de campaña). Ver `specs/005-brief-campana-ignite.md` en `SDD-TAQUION` para el detalle completo.
+- **2026-09-13 — Deploy real:** conectado a Vercel vía import de Git (`MarketingTaquion/Brief-Campana-Ignite`, proyecto `brief-campana-ignite-aw3s`, auto-deploy en cada push a `master`), con Deployment Protection desactivado para que sea público. URL: https://brief-campana-ignite-aw3s.vercel.app
+- **2026-09-13 — Automatización n8n (opcional):** workflow `n8n/Brief-Campana-Ignite-Supabase-Webhook.json` que genera un Google Doc/PDF por cada brief nuevo, disparado por un Database Webhook de Supabase (no depende del frontend). Pendiente de credenciales/plantilla real para activarse — ver `n8n/README-Instalacion.md`.

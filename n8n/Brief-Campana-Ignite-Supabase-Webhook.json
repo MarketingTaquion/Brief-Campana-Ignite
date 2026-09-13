@@ -1,0 +1,271 @@
+{
+  "name": "Taquion · Brief de Campaña (Ignite) → Documento en Drive",
+  "nodes": [
+    {
+      "id": "c1a2b3c4-0001-4b01-90e6-brief0000001",
+      "name": "Nota - Cómo se dispara",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [220, -80],
+      "parameters": {
+        "width": 500,
+        "height": 280,
+        "content": "## Disparador: Supabase Database Webhook\n\nEste workflow NO usa un Form Trigger ni recibe el POST directo del formulario `ignite-brief`. El disparador es un **Database Webhook** configurado en el dashboard de Supabase (Database → Webhooks) sobre la tabla `campaign_briefs`, evento **INSERT únicamente**.\n\nVentaja: el formulario ya deployado (`ignite-brief/public/index.html`) no necesita ningún cambio ni redeploy — Supabase sigue siendo la única fuente de verdad, y si este workflow está caído el brief igual quedó guardado y visible en el panel interno.\n\nVer `README-Instalacion.md` para el paso a paso de configuración del lado de Supabase."
+      }
+    },
+    {
+      "id": "c1a2b3c4-0002-4b01-90e6-brief0000002",
+      "name": "Nota - Configurar antes de activar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [980, -280],
+      "parameters": {
+        "width": 640,
+        "height": 260,
+        "color": 4,
+        "content": "## ⚠️ Configurar antes de activar\n\n- **Recibir Brief (Webhook)**: activar autenticación **Header Auth** (credencial nueva) y configurar el mismo header/valor como \"Custom Header\" en el Database Webhook de Supabase — evita que cualquiera que adivine la URL pueda crear documentos falsos en Drive.\n- **Copiar Plantilla de Brief de Campaña**: ID de la plantilla de Google Docs y de la carpeta de Drive destino (ver `Plantilla-Google-Docs-Brief-Campana.md`).\n- **Completar Brief de Campaña (Google Docs API)**: credencial OAuth2 de Google Docs.\n- **Copiar Plantilla…** / **Exportar a PDF** / **Guardar PDF en Drive**: credencial OAuth2 de Google Drive.\n- Del lado de Supabase: Database → Webhooks → tabla `campaign_briefs`, evento **Insert** únicamente (no Update/Delete) — si se marca Update, cada cambio de estado en el panel dispararía un documento nuevo."
+      }
+    },
+    {
+      "id": "c1a2b3c4-0003-4b01-90e6-brief0000003",
+      "name": "Recibir Brief (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "d3c5e7f9-2b4d-4c5e-8f7a-brief-campana-ignite",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brief-campana-ignite-supabase",
+        "responseMode": "responseNode",
+        "authentication": "headerAuth",
+        "options": {}
+      }
+    },
+    {
+      "id": "c1a2b3c4-0004-4b01-90e6-brief0000004",
+      "name": "¿Es un INSERT?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-insert",
+              "leftValue": "={{ $json.body.type }}",
+              "rightValue": "INSERT",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c1a2b3c4-0005-4b01-90e6-brief0000005",
+      "name": "Normalizar Datos del Brief",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [760, 180],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "n1", "name": "id", "type": "string", "value": "={{ $json.body.record.id }}" },
+            { "id": "n2", "name": "fecha_creacion", "type": "string", "value": "={{ DateTime.fromISO($json.body.record.created_at).toFormat('dd/MM/yyyy HH:mm') }}" },
+            { "id": "n3", "name": "nombre_campana", "type": "string", "value": "={{ $json.body.record.nombre_campana }}" },
+            { "id": "n4", "name": "solicitado_por", "type": "string", "value": "={{ $json.body.record.solicitado_por }}" },
+            { "id": "n5", "name": "email_solicitante", "type": "string", "value": "={{ $json.body.record.email_solicitante }}" },
+            { "id": "n6", "name": "contexto", "type": "string", "value": "={{ $json.body.record.contexto }}" },
+            { "id": "n7", "name": "objetivos", "type": "array", "value": "={{ $json.body.record.objetivos }}" },
+            { "id": "n8", "name": "objetivo_otro", "type": "string", "value": "={{ $json.body.record.objetivo_otro }}" },
+            { "id": "n9", "name": "audiencia_demografica", "type": "string", "value": "={{ $json.body.record.audiencia_demografica }}" },
+            { "id": "n10", "name": "audiencia_geografica", "type": "string", "value": "={{ $json.body.record.audiencia_geografica }}" },
+            { "id": "n11", "name": "audiencia_psicografia", "type": "string", "value": "={{ $json.body.record.audiencia_psicografia }}" },
+            { "id": "n12", "name": "audiencia_comportamientos", "type": "string", "value": "={{ $json.body.record.audiencia_comportamientos }}" },
+            { "id": "n13", "name": "etapa_embudo", "type": "string", "value": "={{ $json.body.record.etapa_embudo }}" },
+            { "id": "n14", "name": "pagina_destino", "type": "string", "value": "={{ $json.body.record.pagina_destino }}" },
+            { "id": "n15", "name": "canales", "type": "array", "value": "={{ $json.body.record.canales }}" },
+            { "id": "n16", "name": "entregables", "type": "array", "value": "={{ $json.body.record.entregables }}" },
+            { "id": "n17", "name": "entregable_otro", "type": "string", "value": "={{ $json.body.record.entregable_otro }}" },
+            { "id": "n18", "name": "mensaje_central", "type": "string", "value": "={{ $json.body.record.mensaje_central }}" },
+            { "id": "n19", "name": "mensaje_principal", "type": "string", "value": "={{ $json.body.record.mensaje_principal }}" },
+            { "id": "n20", "name": "piezas_titulares", "type": "string", "value": "={{ $json.body.record.piezas_titulares }}" },
+            { "id": "n21", "name": "mensajes_secundarios", "type": "string", "value": "={{ $json.body.record.mensajes_secundarios }}" },
+            { "id": "n22", "name": "llamados_accion", "type": "string", "value": "={{ $json.body.record.llamados_accion }}" },
+            { "id": "n23", "name": "direccion_creativa", "type": "string", "value": "={{ $json.body.record.direccion_creativa }}" },
+            { "id": "n24", "name": "preferencias_identidad", "type": "array", "value": "={{ $json.body.record.preferencias_identidad }}" },
+            { "id": "n25", "name": "preferencias_otro", "type": "string", "value": "={{ $json.body.record.preferencias_otro }}" },
+            { "id": "n26", "name": "elementos_marca", "type": "array", "value": "={{ $json.body.record.elementos_marca }}" },
+            { "id": "n27", "name": "informacion_adicional", "type": "string", "value": "={{ $json.body.record.informacion_adicional }}" },
+            { "id": "n28", "name": "recursos_clave", "type": "string", "value": "={{ $json.body.record.recursos_clave }}" },
+            { "id": "n29", "name": "estado", "type": "string", "value": "={{ $json.body.record.estado }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c1a2b3c4-0006-4b01-90e6-brief0000006",
+      "name": "Armar Placeholders del Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 180],
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nfunction joinArr(v) {\n  if (Array.isArray(v)) return v.filter(Boolean).join(' · ');\n  return v || '';\n}\n\nfunction orEmpty(v) {\n  const s = (v === null || v === undefined) ? '' : String(v).trim();\n  return s === '' ? '— sin completar —' : s;\n}\n\nconst placeholders = {\n  '{{ID_BRIEF}}': item.id || '',\n  '{{FECHA}}': item.fecha_creacion || '',\n  '{{NOMBRE_CAMPANA}}': orEmpty(item.nombre_campana),\n  '{{SOLICITADO_POR}}': orEmpty(item.solicitado_por),\n  '{{EMAIL_SOLICITANTE}}': orEmpty(item.email_solicitante),\n  '{{CONTEXTO}}': orEmpty(item.contexto),\n  '{{OBJETIVOS}}': orEmpty(joinArr(item.objetivos)),\n  '{{OBJETIVO_OTRO}}': orEmpty(item.objetivo_otro),\n  '{{AUDIENCIA_DEMOGRAFICA}}': orEmpty(item.audiencia_demografica),\n  '{{AUDIENCIA_GEOGRAFICA}}': orEmpty(item.audiencia_geografica),\n  '{{AUDIENCIA_PSICOGRAFIA}}': orEmpty(item.audiencia_psicografia),\n  '{{AUDIENCIA_COMPORTAMIENTOS}}': orEmpty(item.audiencia_comportamientos),\n  '{{ETAPA_EMBUDO}}': orEmpty(item.etapa_embudo),\n  '{{PAGINA_DESTINO}}': orEmpty(item.pagina_destino),\n  '{{CANALES}}': orEmpty(joinArr(item.canales)),\n  '{{ENTREGABLES}}': orEmpty(joinArr(item.entregables)),\n  '{{ENTREGABLE_OTRO}}': orEmpty(item.entregable_otro),\n  '{{MENSAJE_CENTRAL}}': orEmpty(item.mensaje_central),\n  '{{MENSAJE_PRINCIPAL}}': orEmpty(item.mensaje_principal),\n  '{{PIEZAS_TITULARES}}': orEmpty(item.piezas_titulares),\n  '{{MENSAJES_SECUNDARIOS}}': orEmpty(item.mensajes_secundarios),\n  '{{LLAMADOS_ACCION}}': orEmpty(item.llamados_accion),\n  '{{DIRECCION_CREATIVA}}': orEmpty(item.direccion_creativa),\n  '{{PREFERENCIAS_IDENTIDAD}}': orEmpty(joinArr(item.preferencias_identidad)),\n  '{{PREFERENCIAS_OTRO}}': orEmpty(item.preferencias_otro),\n  '{{ELEMENTOS_MARCA}}': orEmpty(joinArr(item.elementos_marca)),\n  '{{INFORMACION_ADICIONAL}}': orEmpty(item.informacion_adicional),\n  '{{RECURSOS_CLAVE}}': orEmpty(item.recursos_clave),\n  '{{ESTADO}}': orEmpty(item.estado)\n};\n\nconst docsApiRequests = Object.entries(placeholders).map(([text, replaceText]) => ({\n  replaceAllText: {\n    containsText: { text, matchCase: true },\n    replaceText\n  }\n}));\n\nreturn [{\n  json: {\n    ...item,\n    docsApiRequests\n  }\n}];"
+      }
+    },
+    {
+      "id": "c1a2b3c4-0007-4b01-90e6-brief0000007",
+      "name": "Copiar Plantilla de Brief de Campaña",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1280, 180],
+      "parameters": {
+        "resource": "file",
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "REEMPLAZAR_CON_ID_DE_PLANTILLA_GOOGLE_DOCS",
+          "mode": "id"
+        },
+        "options": {
+          "name": "=Brief Campaña - {{ $json.nombre_campana }} - {{ $json.fecha_creacion }} - {{ $json.id }}",
+          "parents": ["REEMPLAZAR_CON_ID_DE_CARPETA_DE_BRIEFS"]
+        }
+      }
+    },
+    {
+      "id": "c1a2b3c4-0008-4b01-90e6-brief0000008",
+      "name": "Completar Brief de Campaña (Google Docs API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.id }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ requests: $('Armar Placeholders del Brief').item.json.docsApiRequests }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "c1a2b3c4-0009-4b01-90e6-brief0000009",
+      "name": "Exportar a PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1800, 180],
+      "parameters": {
+        "resource": "file",
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Copiar Plantilla de Brief de Campaña').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": { "docsToFormat": "application/pdf" }
+          },
+          "binaryPropertyName": "data"
+        }
+      }
+    },
+    {
+      "id": "c1a2b3c4-000a-4b01-90e6-brief000000a",
+      "name": "Guardar PDF en Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [2060, 180],
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "name": "=Brief Campaña - {{ $('Armar Placeholders del Brief').item.json.nombre_campana }} - {{ $('Armar Placeholders del Brief').item.json.fecha_creacion }} - {{ $('Armar Placeholders del Brief').item.json.id }}.pdf",
+        "binaryPropertyName": "data",
+        "options": {
+          "parents": ["REEMPLAZAR_CON_ID_DE_CARPETA_DE_BRIEFS"]
+        }
+      }
+    },
+    {
+      "id": "c1a2b3c4-000b-4b01-90e6-brief000000b",
+      "name": "Responder Éxito",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2320, 180],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, id_brief: $('Armar Placeholders del Brief').item.json.id, doc: $('Copiar Plantilla de Brief de Campaña').item.json.webViewLink } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "c1a2b3c4-000c-4b01-90e6-brief000000c",
+      "name": "Ignorar (no es INSERT)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [760, 460],
+      "parameters": {}
+    },
+    {
+      "id": "c1a2b3c4-000d-4b01-90e6-brief000000d",
+      "name": "Responder Ignorado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1020, 460],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, ignored: true, motivo: 'Evento no es INSERT, no se generó documento.' } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Recibir Brief (Webhook)": {
+      "main": [[{ "node": "¿Es un INSERT?", "type": "main", "index": 0 }]]
+    },
+    "¿Es un INSERT?": {
+      "main": [
+        [{ "node": "Normalizar Datos del Brief", "type": "main", "index": 0 }],
+        [{ "node": "Ignorar (no es INSERT)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Normalizar Datos del Brief": {
+      "main": [[{ "node": "Armar Placeholders del Brief", "type": "main", "index": 0 }]]
+    },
+    "Armar Placeholders del Brief": {
+      "main": [[{ "node": "Copiar Plantilla de Brief de Campaña", "type": "main", "index": 0 }]]
+    },
+    "Copiar Plantilla de Brief de Campaña": {
+      "main": [[{ "node": "Completar Brief de Campaña (Google Docs API)", "type": "main", "index": 0 }]]
+    },
+    "Completar Brief de Campaña (Google Docs API)": {
+      "main": [[{ "node": "Exportar a PDF", "type": "main", "index": 0 }]]
+    },
+    "Exportar a PDF": {
+      "main": [[{ "node": "Guardar PDF en Drive", "type": "main", "index": 0 }]]
+    },
+    "Guardar PDF en Drive": {
+      "main": [[{ "node": "Responder Éxito", "type": "main", "index": 0 }]]
+    },
+    "Ignorar (no es INSERT)": {
+      "main": [[{ "node": "Responder Ignorado", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
