@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Briefs — Taquion</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <header class="hdr">
+    <div class="hdr-inner">
+      <div>
+        <p class="hdr-brand">TAQUION</p>
+        <p class="hdr-sub">Panel interno de briefs</p>
+      </div>
+      <nav class="hdr-nav">
+        <a href="index.html">Formulario</a>
+        <a href="panel.html" class="active">Panel interno</a>
+      </nav>
+    </div>
+  </header>
+  <div class="hdr-rule"></div>
+
+  <main class="wrap wide">
+    <div class="intro">
+      <h1>Briefs de campaña recibidos</h1>
+      <p>MVP sin protección de acceso — cualquiera con este link puede ver y actualizar el estado de los briefs. Ver <code>specs/005-brief-campana-ignite.md</code> para el criterio.</p>
+    </div>
+
+    <div id="bannerError" class="banner error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span id="bannerErrorText">No pudimos cargar los briefs.</span>
+    </div>
+
+    <div id="bannerConfig" class="banner warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span>Este panel todavía no está conectado a Supabase — ver <code>README.md</code> para completar la configuración.</span>
+    </div>
+
+    <div class="panel-toolbar">
+      <span class="count" id="countLabel"></span>
+      <button class="btn ghost small" id="refreshBtn" type="button">↻ Actualizar</button>
+    </div>
+
+    <div id="loadingState" class="empty-state"><span class="spinner"></span> Cargando briefs…</div>
+
+    <div id="emptyState" class="empty-state" style="display:none">
+      <h2>Todavía no llegó ningún brief</h2>
+      <p>Los envíos del <a href="index.html">formulario</a> van a aparecer acá apenas se carguen.</p>
+    </div>
+
+    <div class="table-scroll" id="tableWrap" style="display:none">
+      <table class="briefs">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Campaña</th>
+            <th>Solicitado por</th>
+            <th>Etapa</th>
+            <th>Canales</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <p class="foot wide">Taquion — Uso interno. Implementación de <code>specs/005-brief-campana-ignite.md</code>.</p>
+
+  <!-- Modal de detalle -->
+  <div class="overlay" id="overlay">
+    <div class="detail" id="detailContent"></div>
+  </div>
+
+<script type="module">
+  import { getSupabase, isConfigured } from './supabase-client.js';
+
+  const bannerError = document.getElementById('bannerError');
+  const bannerErrorText = document.getElementById('bannerErrorText');
+  const bannerConfig = document.getElementById('bannerConfig');
+  const countLabel = document.getElementById('countLabel');
+  const loadingState = document.getElementById('loadingState');
+  const emptyState = document.getElementById('emptyState');
+  const tableWrap = document.getElementById('tableWrap');
+  const tableBody = document.getElementById('tableBody');
+  const overlay = document.getElementById('overlay');
+  const detailContent = document.getElementById('detailContent');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  const ESTADOS = ['Nuevo', 'En revisión', 'Aprobado'];
+  const STATUS_CLASS = { 'Nuevo': 'st-nuevo', 'En revisión': 'st-revision', 'Aprobado': 'st-aprobado' };
+
+  let briefs = [];
+
+  function fmtDate(iso) {
+    try {
+      return new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch { return iso; }
+  }
+
+  function tagList(arr) {
+    if (!arr || arr.length === 0) return '<span class="cell-muted">—</span>';
+    return arr.map(v => `<span class="tag">${escapeHtml(v)}</span>`).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  function statusSelectHtml(brief) {
+    const opts = ESTADOS.map(e => `<option value="${e}" ${e === brief.estado ? 'selected' : ''}>${e}</option>`).join('');
+    const cls = STATUS_CLASS[brief.estado] || 'st-nuevo';
+    return `<select class="status-select ${cls}" data-id="${brief.id}">${opts}</select>`;
+  }
+
+  function renderTable() {
+    if (briefs.length === 0) {
+      loadingState.style.display = 'none';
+      emptyState.style.display = 'block';
+      tableWrap.style.display = 'none';
+      countLabel.textContent = '';
+      return;
+    }
+    loadingState.style.display = 'none';
+    emptyState.style.display = 'none';
+    tableWrap.style.display = 'block';
+    countLabel.textContent = briefs.length + (briefs.length === 1 ? ' brief recibido' : ' briefs recibidos');
+
+    tableBody.innerHTML = briefs.map(b => `
+      <tr class="row-clickable" data-id="${b.id}">
+        <td class="cell-muted">${fmtDate(b.created_at)}</td>
+        <td class="cell-name">${escapeHtml(b.nombre_campana) || '<span class="cell-muted">Sin nombre</span>'}</td>
+        <td>${escapeHtml(b.solicitado_por)}</td>
+        <td>${escapeHtml(b.etapa_embudo) || '<span class="cell-muted">—</span>'}</td>
+        <td>${tagList(b.canales)}</td>
+        <td data-status-cell></td>
+      </tr>
+    `).join('');
+
+    // status selects se insertan aparte para poder engancharles el listener sin romper el template string
+    tableBody.querySelectorAll('tr').forEach(tr => {
+      const id = tr.getAttribute('data-id');
+      const brief = briefs.find(b => String(b.id) === id);
+      const cell = tr.querySelector('[data-status-cell]');
+      cell.innerHTML = statusSelectHtml(brief);
+      cell.querySelector('select').addEventListener('click', ev => ev.stopPropagation());
+      cell.querySelector('select').addEventListener('change', ev => updateStatus(brief.id, ev.target.value));
+      tr.addEventListener('click', () => openDetail(brief));
+    });
+  }
+
+  function detailField(label, value) {
+    const empty = value === null || value === undefined || value === '';
+    return `<div class="detail-field"><dt>${label}</dt><dd class="${empty ? 'is-empty' : ''}">${empty ? '' : escapeHtml(value)}</dd></div>`;
+  }
+
+  function openDetail(b) {
+    detailContent.innerHTML = `
+      <button class="detail-close" id="closeDetail" aria-label="Cerrar">✕</button>
+      <h2>${escapeHtml(b.nombre_campana) || 'Sin nombre'}</h2>
+      <p class="meta">Enviado por ${escapeHtml(b.solicitado_por)} (${escapeHtml(b.email_solicitante)}) — ${fmtDate(b.created_at)}</p>
+
+      <div class="detail-section">
+        <h3>Contexto</h3>
+        ${detailField('Contexto de la campaña', b.contexto)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Objetivo</h3>
+        ${detailField('Objetivos seleccionados', (b.objetivos || []).join(' · '))}
+        ${detailField('Otro objetivo', b.objetivo_otro)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Audiencia objetivo</h3>
+        ${detailField('Datos demográficos', b.audiencia_demografica)}
+        ${detailField('Datos geográficos', b.audiencia_geografica)}
+        ${detailField('Psicografía', b.audiencia_psicografia)}
+        ${detailField('Comportamientos', b.audiencia_comportamientos)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Embudo y destino</h3>
+        ${detailField('Etapa del embudo', b.etapa_embudo)}
+        ${detailField('Página de destino', b.pagina_destino)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Canales y entregables</h3>
+        ${detailField('Canales', (b.canales || []).join(' · '))}
+        ${detailField('Entregables', (b.entregables || []).join(' · '))}
+        ${detailField('Otro entregable', b.entregable_otro)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Mensaje</h3>
+        ${detailField('Mensaje central y tono', b.mensaje_central)}
+        ${detailField('Mensaje principal', b.mensaje_principal)}
+        ${detailField('Piezas y titulares', b.piezas_titulares)}
+        ${detailField('Mensajes secundarios', b.mensajes_secundarios)}
+        ${detailField('Llamados a la acción', b.llamados_accion)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Dirección estratégica y creativa</h3>
+        ${detailField('Dirección elegida', b.direccion_creativa)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Preferencias e identidad</h3>
+        ${detailField('Preferencias de identidad y ejecución', (b.preferencias_identidad || []).join(' · '))}
+        ${detailField('Otras preferencias', b.preferencias_otro)}
+        ${detailField('Elementos de marca y campaña', (b.elementos_marca || []).join(' · '))}
+      </div>
+
+      <div class="detail-section">
+        <h3>Adicional</h3>
+        ${detailField('Información adicional', b.informacion_adicional)}
+        ${detailField('Recursos clave', b.recursos_clave)}
+      </div>
+    `;
+    detailContent.querySelector('#closeDetail').addEventListener('click', closeDetail);
+    overlay.classList.add('show');
+  }
+
+  function closeDetail() {
+    overlay.classList.remove('show');
+  }
+  overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeDetail(); });
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeDetail(); });
+
+  async function updateStatus(id, estado) {
+    const supabase = getSupabase();
+    if (!supabase) return;
+    const brief = briefs.find(b => b.id === id);
+    const prevEstado = brief?.estado;
+    if (brief) brief.estado = estado; // optimista
+    const { error } = await supabase.from('campaign_briefs').update({ estado }).eq('id', id);
+    if (error) {
+      if (brief) brief.estado = prevEstado;
+      renderTable();
+      bannerErrorText.textContent = 'No pudimos actualizar el estado (' + error.message + ').';
+      bannerError.classList.add('show');
+    }
+  }
+
+  async function loadBriefs() {
+    const supabase = getSupabase();
+    if (!supabase) {
+      loadingState.style.display = 'none';
+      return;
+    }
+    loadingState.style.display = 'block';
+    tableWrap.style.display = 'none';
+    emptyState.style.display = 'none';
+    bannerError.classList.remove('show');
+
+    const { data, error } = await supabase
+      .from('campaign_briefs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      loadingState.style.display = 'none';
+      bannerErrorText.textContent = 'No pudimos cargar los briefs (' + error.message + ').';
+      bannerError.classList.add('show');
+      return;
+    }
+
+    briefs = data || [];
+    renderTable();
+  }
+
+  if (isConfigured()) {
+    bannerConfig.classList.remove('show');
+    loadBriefs();
+  } else {
+    bannerConfig.classList.add('show');
+    loadingState.style.display = 'none';
+  }
+
+  refreshBtn.addEventListener('click', loadBriefs);
+</script>
+<script src="config.js" onerror="console.warn('config.js no encontrado — ver README.md para configurarlo')"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "ignite-brief",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Brief de campaña (Ignite) — formulario online + panel interno. Ver specs/005-brief-campana-ignite.md en SDD-TAQUION.",
+  "scripts": {
+    "build": "node scripts/generate-config.js",
+    "dev": "node scripts/generate-config.js && npx --yes serve public -l 5173"
+  }
+}

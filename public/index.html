@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brief de Campaña — Taquion</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <header class="hdr">
+    <div class="hdr-inner">
+      <div>
+        <p class="hdr-brand">TAQUION</p>
+        <p class="hdr-sub">Brief de campaña</p>
+      </div>
+      <nav class="hdr-nav">
+        <a href="index.html" class="active">Formulario</a>
+        <a href="panel.html">Panel interno</a>
+      </nav>
+    </div>
+  </header>
+  <div class="hdr-rule"></div>
+
+  <main class="wrap">
+    <div class="intro">
+      <h1>Completá el brief antes de producir la campaña</h1>
+      <p>Este formulario reemplaza el brief suelto por chat o documento sin registro. Todo lo que cargues acá queda guardado y visible para el equipo en el <a href="panel.html">panel interno</a>.</p>
+    </div>
+
+    <div class="card">
+
+      <div id="bannerError" class="banner error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span id="bannerErrorText">No pudimos enviar el brief. Revisá los campos obligatorios e intentá de nuevo.</span>
+      </div>
+
+      <div id="bannerConfig" class="banner warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>Este formulario todavía no está conectado a una base de datos (falta configurar Supabase). Los envíos no se van a guardar hasta que se complete la configuración — ver <code>README.md</code>.</span>
+      </div>
+
+      <form id="briefForm" novalidate>
+
+        <fieldset>
+          <legend>Campaña</legend>
+          <div class="row">
+            <div class="field">
+              <label for="nombre_campana">Nombre de la campaña <span class="req">*</span></label>
+              <input class="ctl" type="text" id="nombre_campana" name="nombre_campana" required placeholder="Ej. Lanzamiento Producto X">
+            </div>
+          </div>
+          <div class="row cols-2">
+            <div class="field">
+              <label for="solicitado_por">Solicitado por <span class="req">*</span></label>
+              <input class="ctl" type="text" id="solicitado_por" name="solicitado_por" required placeholder="Tu nombre">
+            </div>
+            <div class="field">
+              <label for="email_solicitante">Tu email <span class="req">*</span></label>
+              <input class="ctl" type="email" id="email_solicitante" name="email_solicitante" required placeholder="nombre@taquion.com.ar">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Contexto</legend>
+          <div class="row">
+            <div class="field">
+              <label for="contexto">Contexto de la campaña</label>
+              <textarea class="ctl" id="contexto" name="contexto" placeholder="Descripción general del proyecto: antecedentes relevantes y por qué es necesaria esta campaña."></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Objetivo de la campaña</legend>
+          <div class="checks" id="objetivosGroup">
+            <div class="check"><input type="checkbox" id="obj1" name="objetivos" value="Presentar la marca y el producto/servicio a una audiencia amplia"><label for="obj1">Presentar marca/producto a una audiencia amplia</label></div>
+            <div class="check"><input type="checkbox" id="obj2" name="objetivos" value="Desarrollar el interés y educar sobre los beneficios del producto"><label for="obj2">Desarrollar interés y educar sobre beneficios</label></div>
+            <div class="check"><input type="checkbox" id="obj3" name="objetivos" value="Impulsar conversiones (compra, registro, etc.)"><label for="obj3">Impulsar conversiones (compra, registro, etc.)</label></div>
+            <div class="check"><input type="checkbox" id="obj4" name="objetivos" value="Retener clientes actuales y convertirlos en embajadores"><label for="obj4">Retener clientes y convertirlos en embajadores</label></div>
+          </div>
+          <div class="row" style="margin-top:var(--tq-space-3)">
+            <div class="field">
+              <label for="objetivo_otro">Otro objetivo (opcional)</label>
+              <input class="ctl" type="text" id="objetivo_otro" name="objetivo_otro" placeholder="Si no encaja en las opciones de arriba">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Audiencia objetivo</legend>
+          <div class="row cols-2">
+            <div class="field">
+              <label for="audiencia_demografica">Datos demográficos</label>
+              <textarea class="ctl" id="audiencia_demografica" name="audiencia_demografica" placeholder="Edad, género, nivel socioeconómico..."></textarea>
+            </div>
+            <div class="field">
+              <label for="audiencia_geografica">Datos geográficos</label>
+              <textarea class="ctl" id="audiencia_geografica" name="audiencia_geografica" placeholder="País, región, ciudad, barrio..."></textarea>
+            </div>
+          </div>
+          <div class="row cols-2">
+            <div class="field">
+              <label for="audiencia_psicografia">Psicografía</label>
+              <textarea class="ctl" id="audiencia_psicografia" name="audiencia_psicografia" placeholder="Valores, intereses, estilo de vida..."></textarea>
+            </div>
+            <div class="field">
+              <label for="audiencia_comportamientos">Comportamientos</label>
+              <textarea class="ctl" id="audiencia_comportamientos" name="audiencia_comportamientos" placeholder="Comportamiento de compra y otros datos relevantes..."></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Embudo y destino</legend>
+          <div class="row cols-2">
+            <div class="field">
+              <label for="etapa_embudo">Etapa del embudo</label>
+              <select class="ctl" id="etapa_embudo" name="etapa_embudo">
+                <option value="" disabled selected>Elegí una opción</option>
+                <option>Prospección</option>
+                <option>Consideración</option>
+                <option>Conversión</option>
+                <option>Retención</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="pagina_destino">Página de destino</label>
+              <input class="ctl" type="text" id="pagina_destino" name="pagina_destino" placeholder="www.landingpage.com">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Canales</legend>
+          <div class="checks" id="canalesGroup">
+            <div class="check"><input type="checkbox" id="ch1" name="canales" value="Google Display"><label for="ch1">Google Display</label></div>
+            <div class="check"><input type="checkbox" id="ch2" name="canales" value="Meta"><label for="ch2">Meta</label></div>
+            <div class="check"><input type="checkbox" id="ch3" name="canales" value="LinkedIn"><label for="ch3">LinkedIn</label></div>
+            <div class="check"><input type="checkbox" id="ch4" name="canales" value="Twitter/X"><label for="ch4">Twitter/X</label></div>
+            <div class="check"><input type="checkbox" id="ch5" name="canales" value="Quora"><label for="ch5">Quora</label></div>
+            <div class="check"><input type="checkbox" id="ch6" name="canales" value="Reddit"><label for="ch6">Reddit</label></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Entregables</legend>
+          <div class="checks" id="entregablesGroup">
+            <div class="check"><input type="checkbox" id="en1" name="entregables" value="Estático"><label for="en1">Estático</label></div>
+            <div class="check"><input type="checkbox" id="en2" name="entregables" value="Display - Adaptable"><label for="en2">Display - Adaptable</label></div>
+            <div class="check"><input type="checkbox" id="en3" name="entregables" value="Display - Personalizado"><label for="en3">Display - Personalizado</label></div>
+            <div class="check"><input type="checkbox" id="en4" name="entregables" value="Carrusel"><label for="en4">Carrusel</label></div>
+          </div>
+          <div class="row" style="margin-top:var(--tq-space-3)">
+            <div class="field">
+              <label for="entregable_otro">Otro entregable (opcional)</label>
+              <input class="ctl" type="text" id="entregable_otro" name="entregable_otro" placeholder="Ej. Video, GIF...">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Mensaje</legend>
+          <div class="row">
+            <div class="field">
+              <label for="mensaje_central">Mensaje central y tono de voz</label>
+              <textarea class="ctl" id="mensaje_central" name="mensaje_central" placeholder="Cuál es el mensaje central de la campaña y qué tono de voz debe tener."></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Mensajes y contenidos de campaña</legend>
+          <div class="row">
+            <div class="field">
+              <label for="mensaje_principal">Mensaje principal</label>
+              <textarea class="ctl" id="mensaje_principal" name="mensaje_principal"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="piezas_titulares">Piezas y titulares</label>
+              <textarea class="ctl" id="piezas_titulares" name="piezas_titulares"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="mensajes_secundarios">Mensajes secundarios</label>
+              <textarea class="ctl" id="mensajes_secundarios" name="mensajes_secundarios"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="llamados_accion">Llamados a la acción</label>
+              <textarea class="ctl" id="llamados_accion" name="llamados_accion"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Dirección estratégica y creativa</legend>
+          <div class="radios" id="direccionGroup">
+            <div class="radio"><input type="radio" id="dir1" name="direccion_creativa" value="Nada nuevo: debe reflejar al 100% el material previo/existente"><label for="dir1">Nada nuevo: debe reflejar al 100% el material previo/existente</label></div>
+            <div class="radio"><input type="radio" id="dir2" name="direccion_creativa" value="Solo ideas nuevas: explorar distintas ideas visuales"><label for="dir2">Solo ideas nuevas: explorar distintas ideas visuales</label></div>
+            <div class="radio"><input type="radio" id="dir3" name="direccion_creativa" value="Conforme mientras esté dentro de la identidad de marca"><label for="dir3">Conforme mientras esté dentro de la identidad de marca</label></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Preferencias de identidad y ejecución</legend>
+          <div class="checks" id="preferenciasGroup">
+            <div class="check"><input type="checkbox" id="pr1" name="preferencias_identidad" value="Incluir visuales de interfaz"><label for="pr1">Incluir visuales de interfaz</label></div>
+            <div class="check"><input type="checkbox" id="pr2" name="preferencias_identidad" value="Excluir el uso de imágenes de stock"><label for="pr2">Excluir uso de imágenes de stock</label></div>
+            <div class="check"><input type="checkbox" id="pr3" name="preferencias_identidad" value="Excluir el uso de mockups (dispositivos, cartelería)"><label for="pr3">Excluir uso de mockups (dispositivos, cartelería)</label></div>
+          </div>
+          <div class="row" style="margin-top:var(--tq-space-3)">
+            <div class="field">
+              <label for="preferencias_otro">Otras preferencias (opcional)</label>
+              <input class="ctl" type="text" id="preferencias_otro" name="preferencias_otro">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Elementos de marca y campaña</legend>
+          <div class="checks" id="elementosGroup">
+            <div class="check"><input type="checkbox" id="el1" name="elementos_marca" value="Incluir el logo en todas las piezas cuando corresponda"><label for="el1">Incluir logo en todas las piezas cuando corresponda</label></div>
+            <div class="check"><input type="checkbox" id="el2" name="elementos_marca" value="Incluir llamados a la acción coherentes entre canales"><label for="el2">CTAs coherentes entre canales</label></div>
+            <div class="check"><input type="checkbox" id="el3" name="elementos_marca" value="Incluir logo y CTA de forma consistente en la campaña"><label for="el3">Logo y CTA consistentes en toda la campaña</label></div>
+            <div class="check"><input type="checkbox" id="el4" name="elementos_marca" value="Excluir logo o CTA solo cuando la estrategia del canal lo requiera"><label for="el4">Excluir logo/CTA solo si la estrategia del canal lo requiere</label></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Información adicional</legend>
+          <div class="row">
+            <div class="field">
+              <label for="informacion_adicional">Requisitos adicionales o preferencias para los anuncios</label>
+              <textarea class="ctl" id="informacion_adicional" name="informacion_adicional"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Recursos clave</legend>
+          <div class="row">
+            <div class="field">
+              <label for="recursos_clave">Enlaces (uno por línea)</label>
+              <textarea class="ctl" id="recursos_clave" name="recursos_clave" placeholder="Enlace a Figma&#10;Enlace al recurso del proyecto"></textarea>
+              <span class="hint">Asegurate de que cualquier enlace compartido esté configurado como público.</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <span class="hint">El brief queda visible al instante en el panel interno.</span>
+          <button class="btn" type="submit" id="submitBtn">Enviar brief</button>
+        </div>
+      </form>
+
+      <div class="success" id="successPanel">
+        <div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h2>Brief enviado</h2>
+        <p>Ya está disponible en el panel interno.</p>
+        <p class="id" id="successId"></p>
+        <button class="btn ghost" type="button" id="resetBtn">Cargar otro brief</button>
+      </div>
+
+    </div>
+  </main>
+
+  <p class="foot">Taquion — Uso interno. Implementación de <code>specs/005-brief-campana-ignite.md</code>.</p>
+
+<script type="module">
+  import { getSupabase, isConfigured } from './supabase-client.js';
+
+  const form = document.getElementById('briefForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const bannerError = document.getElementById('bannerError');
+  const bannerErrorText = document.getElementById('bannerErrorText');
+  const bannerConfig = document.getElementById('bannerConfig');
+  const successPanel = document.getElementById('successPanel');
+  const successId = document.getElementById('successId');
+
+  if (isConfigured()) {
+    bannerConfig.classList.remove('show');
+  } else {
+    bannerConfig.classList.add('show');
+  }
+
+  function checkedValues(name) {
+    return Array.from(form.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
+  }
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    bannerError.classList.remove('show');
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      bannerErrorText.textContent = 'La base de datos todavía no está configurada. Avisá al equipo técnico antes de seguir enviando briefs.';
+      bannerError.classList.add('show');
+      return;
+    }
+
+    const payload = {
+      nombre_campana: form.nombre_campana.value.trim(),
+      solicitado_por: form.solicitado_por.value.trim(),
+      email_solicitante: form.email_solicitante.value.trim(),
+      contexto: form.contexto.value.trim(),
+      objetivos: checkedValues('objetivos'),
+      objetivo_otro: form.objetivo_otro.value.trim(),
+      audiencia_demografica: form.audiencia_demografica.value.trim(),
+      audiencia_geografica: form.audiencia_geografica.value.trim(),
+      audiencia_psicografia: form.audiencia_psicografia.value.trim(),
+      audiencia_comportamientos: form.audiencia_comportamientos.value.trim(),
+      etapa_embudo: form.etapa_embudo.value,
+      pagina_destino: form.pagina_destino.value.trim(),
+      canales: checkedValues('canales'),
+      entregables: checkedValues('entregables'),
+      entregable_otro: form.entregable_otro.value.trim(),
+      mensaje_central: form.mensaje_central.value.trim(),
+      mensaje_principal: form.mensaje_principal.value.trim(),
+      piezas_titulares: form.piezas_titulares.value.trim(),
+      mensajes_secundarios: form.mensajes_secundarios.value.trim(),
+      llamados_accion: form.llamados_accion.value.trim(),
+      direccion_creativa: form.direccion_creativa.value || null,
+      preferencias_identidad: checkedValues('preferencias_identidad'),
+      preferencias_otro: form.preferencias_otro.value.trim(),
+      elementos_marca: checkedValues('elementos_marca'),
+      informacion_adicional: form.informacion_adicional.value.trim(),
+      recursos_clave: form.recursos_clave.value.trim(),
+      estado: 'Nuevo',
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando…';
+
+    try {
+      const { data, error } = await supabase.from('campaign_briefs').insert(payload).select('id').single();
+      if (error) throw error;
+
+      form.classList.add('hidden');
+      successPanel.classList.add('show');
+      successId.textContent = data?.id ? ('ID: ' + data.id) : '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      bannerErrorText.textContent = 'No pudimos guardar el brief (' + (err.message || err) + '). Probá de nuevo.';
+      bannerError.classList.add('show');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar brief';
+    }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    form.reset();
+    form.classList.remove('hidden');
+    successPanel.classList.remove('show');
+    bannerError.classList.remove('show');
+  });
+</script>
+<script src="config.js" onerror="console.warn('config.js no encontrado — ver README.md para configurarlo')"></script>
+</body>
+</html>
