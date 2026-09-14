@@ -123,8 +123,9 @@ create policy "anon puede subir archivos de brief"
   to anon
   with check (bucket_id = 'briefs-recursos');
 
-drop policy if exists "anon puede leer archivos de brief" on storage.objects;
-create policy "anon puede leer archivos de brief"
-  on storage.objects for select
-  to anon
-  using (bucket_id = 'briefs-recursos');
+-- Deliberadamente SIN política de select: el bucket ya es público, así que
+-- los links directos (getPublicUrl) funcionan sin ninguna política. Sumar
+-- una política de select acá habilitaría además *listar* todos los archivos
+-- del bucket vía API — Supabase lo marca como advertencia de seguridad
+-- ("Clients can list all files in this bucket") porque no hace falta para
+-- este caso de uso y expone más de lo necesario.
