@@ -113,6 +113,25 @@
     return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   }
 
+  function fmtMoney(value) {
+    if (value === null || value === undefined || value === '') return '';
+    const n = Number(value);
+    if (Number.isNaN(n)) return String(value);
+    return '$ ' + n.toLocaleString('es-AR');
+  }
+
+  function fmtDatesList(arr) {
+    if (!arr || arr.length === 0) return '';
+    return arr
+      .slice()
+      .sort()
+      .map(iso => {
+        const [y, m, d] = iso.split('-');
+        return `${d}/${m}/${y}`;
+      })
+      .join(', ');
+  }
+
   function statusSelectHtml(brief) {
     const opts = ESTADOS.map(e => `<option value="${e}" ${e === brief.estado ? 'selected' : ''}>${e}</option>`).join('');
     const cls = STATUS_CLASS[brief.estado] || 'st-nuevo';
@@ -189,6 +208,12 @@
         <h3>Embudo y destino</h3>
         ${detailField('Etapa del embudo', b.etapa_embudo)}
         ${detailField('Página de destino', b.pagina_destino)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Presupuesto y duración</h3>
+        ${detailField('Presupuesto', fmtMoney(b.presupuesto))}
+        ${detailField('Días de campaña', fmtDatesList(b.duracion_fechas))}
       </div>
 
       <div class="detail-section">

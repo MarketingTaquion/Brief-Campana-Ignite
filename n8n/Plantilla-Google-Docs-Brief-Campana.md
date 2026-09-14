@@ -30,6 +30,8 @@ El workflow (`Brief-Campana-Ignite-Supabase-Webhook.json`) copia este documento 
 | `{{AUDIENCIA_COMPORTAMIENTOS}}` | Comportamientos de la audiencia |
 | `{{ETAPA_EMBUDO}}` | Prospección / Consideración / Conversión / Retención |
 | `{{PAGINA_DESTINO}}` | Landing page de la campaña |
+| `{{PRESUPUESTO}}` | Presupuesto elegido, formateado ($ 5.000.000 / $ 12.000.000 / $ 20.000.000) |
+| `{{DURACION_FECHAS}}` | Días puntuales de la campaña (dd/mm/aaaa separados por coma, no necesariamente consecutivos) |
 | `{{CANALES}}` | Canales marcados, separados por `·` |
 | `{{ENTREGABLES}}` | Entregables marcados, separados por `·` |
 | `{{ENTREGABLE_OTRO}}` | Entregable adicional en texto libre |
@@ -74,30 +76,34 @@ Comportamientos:      {{AUDIENCIA_COMPORTAMIENTOS}}
 Etapa del embudo:  {{ETAPA_EMBUDO}}
 Página de destino: {{PAGINA_DESTINO}}
 
-5. CANALES Y ENTREGABLES
+5. PRESUPUESTO Y DURACIÓN
+Presupuesto:       {{PRESUPUESTO}}
+Días de campaña:   {{DURACION_FECHAS}}
+
+6. CANALES Y ENTREGABLES
 Canales:     {{CANALES}}
 Entregables: {{ENTREGABLES}}
 Otro entregable: {{ENTREGABLE_OTRO}}
 
-6. MENSAJE
+7. MENSAJE
 Mensaje central y tono: {{MENSAJE_CENTRAL}}
 Mensaje principal:      {{MENSAJE_PRINCIPAL}}
 Piezas y titulares:     {{PIEZAS_TITULARES}}
 Mensajes secundarios:   {{MENSAJES_SECUNDARIOS}}
 Llamados a la acción:   {{LLAMADOS_ACCION}}
 
-7. DIRECCIÓN ESTRATÉGICA Y CREATIVA
+8. DIRECCIÓN ESTRATÉGICA Y CREATIVA
 {{DIRECCION_CREATIVA}}
 
-8. PREFERENCIAS DE IDENTIDAD Y ELEMENTOS DE MARCA
+9. PREFERENCIAS DE IDENTIDAD Y ELEMENTOS DE MARCA
 Preferencias de identidad y ejecución: {{PREFERENCIAS_IDENTIDAD}}
 Otras preferencias:                    {{PREFERENCIAS_OTRO}}
 Elementos de marca y campaña:          {{ELEMENTOS_MARCA}}
 
-9. INFORMACIÓN ADICIONAL
+10. INFORMACIÓN ADICIONAL
 {{INFORMACION_ADICIONAL}}
 
-10. RECURSOS CLAVE
+11. RECURSOS CLAVE
 {{RECURSOS_CLAVE}}
 
 ────────────────────────────────────────

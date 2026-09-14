@@ -80,6 +80,26 @@ select.ctl{appearance:none;padding-right:36px;
 .radio input{width:16px;height:16px;accent-color:var(--tq-negro);flex:none;margin-top:3px}
 .radio label{font-size:15px;color:var(--tq-text-strong);cursor:pointer;line-height:1.4}
 
+/* ---------- Calendario de duración ---------- */
+.calendar-field{position:relative}
+.calendar-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;text-align:left}
+.calendar-toggle svg{width:16px;height:16px;flex:none;color:var(--tq-text-muted)}
+.calendar-popover{position:absolute;z-index:10;top:calc(100% + 8px);left:0;width:280px;background:var(--tq-blanco);border:1px solid var(--tq-line);border-radius:var(--tq-radius-md);box-shadow:var(--tq-shadow-overlay,0 12px 32px rgba(0,0,0,.16));padding:16px}
+.calendar-popover[hidden]{display:none}
+.calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calendar-header span{font-size:14px;font-weight:var(--tq-weight-semibold);text-transform:capitalize;color:var(--tq-text-strong)}
+.calendar-nav{background:none;border:1px solid var(--tq-line);border-radius:var(--tq-radius-sm);width:26px;height:26px;line-height:1;cursor:pointer;font-size:16px;color:var(--tq-text-strong)}
+.calendar-nav:hover{background:var(--tq-surface-subtle)}
+.calendar-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.calendar-weekdays span{text-align:center;font-size:11px;font-weight:var(--tq-weight-semibold);color:var(--tq-text-faint);text-transform:uppercase}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calendar-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-family:var(--tq-font-core);border-radius:var(--tq-radius-sm);cursor:pointer;border:1px solid transparent;color:var(--tq-text-strong);background:none;padding:0}
+.calendar-day:hover{background:var(--tq-surface-subtle)}
+.calendar-day.is-today{border-color:var(--tq-azul)}
+.calendar-day.is-selected{background:var(--tq-negro);color:var(--tq-blanco);font-weight:var(--tq-weight-semibold);border-color:var(--tq-negro)}
+.calendar-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--tq-line)}
+.calendar-footer .hint{margin:0}
+
 .actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:var(--tq-space-6);flex-wrap:wrap}
 .actions .hint{font-size:13px;color:var(--tq-text-muted)}
 

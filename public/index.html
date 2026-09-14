@@ -137,6 +137,47 @@
         </fieldset>
 
         <fieldset>
+          <legend>Presupuesto</legend>
+          <div class="radios" id="presupuestoGroup">
+            <div class="radio"><input type="radio" id="pres1" name="presupuesto" value="5000000"><label for="pres1">$ 5.000.000</label></div>
+            <div class="radio"><input type="radio" id="pres2" name="presupuesto" value="12000000"><label for="pres2">$ 12.000.000</label></div>
+            <div class="radio"><input type="radio" id="pres3" name="presupuesto" value="20000000"><label for="pres3">$ 20.000.000</label></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Duración de la campaña</legend>
+          <div class="row">
+            <div class="field calendar-field" id="calendarField">
+              <label for="duracionToggle">Días de la campaña</label>
+              <button type="button" class="ctl calendar-toggle" id="duracionToggle" aria-haspopup="true" aria-expanded="false">
+                <span id="duracionSummary">Elegí los días en el calendario</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <span class="hint">Marcá los días puntuales que dura la campaña — no hace falta que sean consecutivos.</span>
+
+              <div class="calendar-popover" id="calendarPopover" hidden>
+                <div class="calendar-header">
+                  <button type="button" class="calendar-nav" id="calPrev" aria-label="Mes anterior">‹</button>
+                  <span id="calMonthLabel"></span>
+                  <button type="button" class="calendar-nav" id="calNext" aria-label="Mes siguiente">›</button>
+                </div>
+                <div class="calendar-weekdays">
+                  <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                </div>
+                <div class="calendar-grid" id="calGrid"></div>
+                <div class="calendar-footer">
+                  <span class="hint" id="calSelectedCount"></span>
+                  <button type="button" class="btn ghost small" id="calClear">Limpiar</button>
+                </div>
+              </div>
+
+              <input type="hidden" id="duracion_fechas" name="duracion_fechas">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>Canales</legend>
           <div class="checks" id="canalesGroup">
             <div class="check"><input type="checkbox" id="ch1" name="canales" value="Google Display"><label for="ch1">Google Display</label></div>
@@ -297,6 +338,117 @@
     return Array.from(form.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
   }
 
+  // ---------- Calendario de duración (selección de días sueltos, no un rango) ----------
+  const calendarField = document.getElementById('calendarField');
+  const duracionToggle = document.getElementById('duracionToggle');
+  const duracionSummary = document.getElementById('duracionSummary');
+  const calendarPopover = document.getElementById('calendarPopover');
+  const calMonthLabel = document.getElementById('calMonthLabel');
+  const calGrid = document.getElementById('calGrid');
+  const calPrev = document.getElementById('calPrev');
+  const calNext = document.getElementById('calNext');
+  const calClear = document.getElementById('calClear');
+  const calSelectedCount = document.getElementById('calSelectedCount');
+  const duracionFechasInput = document.getElementById('duracion_fechas');
+
+  // Cualquier click adentro del popover no debe llegar al listener de
+  // "click afuera" del documento — sin esto, tocar un día lo cierra solo,
+  // porque el propio click reconstruye la grilla (innerHTML) antes de que
+  // el evento termine de burbujear, y el botón clickeado ya no está en el
+  // DOM cuando el listener del documento evalúa calendarField.contains(...).
+  calendarPopover.addEventListener('click', (ev) => ev.stopPropagation());
+
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const selectedDates = new Set(); // 'YYYY-MM-DD'
+  const today = new Date();
+  let viewYear = today.getFullYear();
+  let viewMonth = today.getMonth();
+
+  function isoDate(y, m, d) {
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  function fmtShort(iso) {
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}`;
+  }
+
+  function renderCalendar() {
+    calMonthLabel.textContent = `${MESES[viewMonth]} ${viewYear}`;
+    calGrid.innerHTML = '';
+
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7; // semana arranca lunes
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const todayIso = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
+
+    for (let i = 0; i < startOffset; i++) {
+      calGrid.appendChild(document.createElement('span'));
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = isoDate(viewYear, viewMonth, d);
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'calendar-day';
+      cell.textContent = String(d);
+      if (iso === todayIso) cell.classList.add('is-today');
+      if (selectedDates.has(iso)) cell.classList.add('is-selected');
+      cell.addEventListener('click', () => {
+        if (selectedDates.has(iso)) selectedDates.delete(iso);
+        else selectedDates.add(iso);
+        renderCalendar();
+        updateSummary();
+      });
+      calGrid.appendChild(cell);
+    }
+  }
+
+  function updateSummary() {
+    const n = selectedDates.size;
+    duracionFechasInput.value = Array.from(selectedDates).sort().join(',');
+    if (n === 0) {
+      duracionSummary.textContent = 'Elegí los días en el calendario';
+      calSelectedCount.textContent = '';
+    } else {
+      const sorted = Array.from(selectedDates).sort();
+      duracionSummary.textContent = n === 1 ? '1 día seleccionado' : `${n} días seleccionados`;
+      calSelectedCount.textContent = n === 1
+        ? fmtShort(sorted[0])
+        : `${fmtShort(sorted[0])} — ${fmtShort(sorted[sorted.length - 1])}`;
+    }
+  }
+
+  duracionToggle.addEventListener('click', () => {
+    const willOpen = calendarPopover.hidden;
+    calendarPopover.hidden = !willOpen;
+    duracionToggle.setAttribute('aria-expanded', String(willOpen));
+    if (willOpen) renderCalendar();
+  });
+
+  calPrev.addEventListener('click', () => {
+    viewMonth--;
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderCalendar();
+  });
+  calNext.addEventListener('click', () => {
+    viewMonth++;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    renderCalendar();
+  });
+  calClear.addEventListener('click', () => {
+    selectedDates.clear();
+    renderCalendar();
+    updateSummary();
+  });
+
+  document.addEventListener('click', (ev) => {
+    if (!calendarField.contains(ev.target)) {
+      calendarPopover.hidden = true;
+      duracionToggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     bannerError.classList.remove('show');
@@ -326,6 +478,8 @@
       audiencia_comportamientos: form.audiencia_comportamientos.value.trim(),
       etapa_embudo: form.etapa_embudo.value,
       pagina_destino: form.pagina_destino.value.trim(),
+      presupuesto: form.presupuesto.value ? Number(form.presupuesto.value) : null,
+      duracion_fechas: Array.from(selectedDates).sort(),
       canales: checkedValues('canales'),
       entregables: checkedValues('entregables'),
       entregable_otro: form.entregable_otro.value.trim(),
@@ -368,7 +522,12 @@
     form.classList.remove('hidden');
     successPanel.classList.remove('show');
     bannerError.classList.remove('show');
+    selectedDates.clear();
+    calendarPopover.hidden = true;
+    updateSummary();
   });
+
+  updateSummary();
 </script>
 <script src="config.js" onerror="console.warn('config.js no encontrado — ver README.md para configurarlo')"></script>
 </body>

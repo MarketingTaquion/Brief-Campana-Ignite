@@ -7,6 +7,12 @@
 -- decisión de producto explícita para esta primera versión, no un descuido —
 -- endurecerla (login, RLS por usuario) es un paso posterior si hace falta.
 
+-- Este archivo es idempotente: correrlo de nuevo sobre una base ya creada no
+-- rompe nada. Cuando se agrega un campo nuevo al formulario, se suma acá tanto
+-- a la definición de "create table" (para instalaciones nuevas) como a un
+-- "alter table ... add column if not exists" (para las que ya existen) —
+-- así una sola corrida de este archivo deja cualquier base al día.
+
 create extension if not exists "pgcrypto";
 
 create table if not exists public.campaign_briefs (
@@ -35,6 +41,10 @@ create table if not exists public.campaign_briefs (
   etapa_embudo text,
   pagina_destino text,
 
+  -- Presupuesto y duración
+  presupuesto numeric,
+  duracion_fechas date[] default '{}',
+
   -- Canales y entregables
   canales text[] default '{}',
   entregables text[] default '{}',
@@ -62,6 +72,12 @@ create table if not exists public.campaign_briefs (
   -- Triage operativo del panel
   estado text not null default 'Nuevo' check (estado in ('Nuevo', 'En revisión', 'Aprobado'))
 );
+
+-- Migración idempotente: agrega columnas nuevas a una tabla que ya existía
+-- antes de que se sumaran estos campos al formulario (2026-09-14).
+alter table public.campaign_briefs
+  add column if not exists presupuesto numeric,
+  add column if not exists duracion_fechas date[] default '{}';
 
 create index if not exists campaign_briefs_created_at_idx on public.campaign_briefs (created_at desc);
 
