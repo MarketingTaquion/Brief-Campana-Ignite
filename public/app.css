@@ -100,6 +100,18 @@ select.ctl{appearance:none;padding-right:36px;
 .calendar-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--tq-line)}
 .calendar-footer .hint{margin:0}
 
+/* ---------- Subida de archivos ---------- */
+.file-upload{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.file-upload .hint{margin:0}
+.file-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.file-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border:1px solid var(--tq-line);border-radius:var(--tq-radius-sm);font-size:13px;background:var(--tq-surface-subtle)}
+.file-item-label{word-break:break-all;color:var(--tq-text-strong)}
+.file-item.is-uploading .file-item-label{color:var(--tq-text-muted)}
+.file-item.is-error{border-color:var(--tq-fucsia)}
+.file-item.is-error .file-item-label{color:#8A0060}
+.file-item-remove{background:none;border:0;cursor:pointer;color:var(--tq-text-faint);padding:2px 4px;flex:none;font-size:13px}
+.file-item-remove:hover{color:var(--tq-negro)}
+
 .actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:var(--tq-space-6);flex-wrap:wrap}
 .actions .hint{font-size:13px;color:var(--tq-text-muted)}
 

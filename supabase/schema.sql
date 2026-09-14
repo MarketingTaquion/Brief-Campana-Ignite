@@ -104,3 +104,27 @@ create policy "anon puede actualizar estado"
   to anon
   using (true)
   with check (true);
+
+-- ============================================================
+-- Storage: bucket para los archivos subidos en "Recursos clave"
+-- ============================================================
+
+-- Bucket público (2026-09-14): los archivos que se suben desde el
+-- botón "Subir archivo" del formulario se guardan acá. Es público para
+-- que el link funcione directo en el panel sin pedir login — mismo
+-- criterio de acceso "MVP sin protección" que el resto de esta spec.
+insert into storage.buckets (id, name, public)
+values ('briefs-recursos', 'briefs-recursos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "anon puede subir archivos de brief" on storage.objects;
+create policy "anon puede subir archivos de brief"
+  on storage.objects for insert
+  to anon
+  with check (bucket_id = 'briefs-recursos');
+
+drop policy if exists "anon puede leer archivos de brief" on storage.objects;
+create policy "anon puede leer archivos de brief"
+  on storage.objects for select
+  to anon
+  using (bucket_id = 'briefs-recursos');

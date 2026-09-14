@@ -179,6 +179,15 @@
     return `<div class="detail-field"><dt>${label}</dt><dd class="${empty ? 'is-empty' : ''}">${empty ? '' : escapeHtml(value)}</dd></div>`;
   }
 
+  function linkify(text) {
+    return escapeHtml(text).replace(/(https?:\/\/[^\s]+)/g, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
+  }
+
+  function detailFieldLinks(label, value) {
+    const empty = value === null || value === undefined || value === '';
+    return `<div class="detail-field"><dt>${label}</dt><dd class="${empty ? 'is-empty' : ''}">${empty ? '' : linkify(value)}</dd></div>`;
+  }
+
   function openDetail(b) {
     detailContent.innerHTML = `
       <button class="detail-close" id="closeDetail" aria-label="Cerrar">✕</button>
@@ -247,7 +256,7 @@
       <div class="detail-section">
         <h3>Adicional</h3>
         ${detailField('Información adicional', b.informacion_adicional)}
-        ${detailField('Recursos clave', b.recursos_clave)}
+        ${detailFieldLinks('Recursos clave', b.recursos_clave)}
       </div>
     `;
     detailContent.querySelector('#closeDetail').addEventListener('click', closeDetail);

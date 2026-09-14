@@ -296,6 +296,17 @@
               <span class="hint">Asegurate de que cualquier enlace compartido esté configurado como público.</span>
             </div>
           </div>
+          <div class="row" style="margin-top:var(--tq-space-3)">
+            <div class="field">
+              <label>Subir archivos</label>
+              <div class="file-upload">
+                <button type="button" class="btn ghost small" id="fileUploadBtn">↑ Subir archivo</button>
+                <input type="file" id="fileInput" multiple hidden>
+                <span class="hint">Máximo 15 MB por archivo. Se agregan al brief junto con los enlaces de arriba.</span>
+              </div>
+              <ul class="file-list" id="fileList"></ul>
+            </div>
+          </div>
         </fieldset>
 
         <div class="actions">
@@ -449,6 +460,93 @@
     }
   });
 
+  // ---------- Subida de archivos a Supabase Storage (bucket "briefs-recursos") ----------
+  const FILES_BUCKET = 'briefs-recursos';
+  const MAX_FILE_MB = 15;
+  const fileUploadBtn = document.getElementById('fileUploadBtn');
+  const fileInput = document.getElementById('fileInput');
+  const fileList = document.getElementById('fileList');
+  let uploadedFiles = []; // { id, name, url }
+
+  fileUploadBtn.addEventListener('click', () => fileInput.click());
+
+  function fileRowHtml(id, label, extraClass) {
+    return `<li class="file-item ${extraClass || ''}" data-id="${id}">
+      <span class="file-item-label">${label}</span>
+      <button type="button" class="file-item-remove" aria-label="Quitar">✕</button>
+    </li>`;
+  }
+
+  function addFileRow(id, name) {
+    fileList.insertAdjacentHTML('beforeend', fileRowHtml(id, `Subiendo ${name}…`, 'is-uploading'));
+  }
+
+  function setFileRowDone(id, name, url) {
+    const li = fileList.querySelector(`[data-id="${id}"]`);
+    if (!li) return;
+    li.className = 'file-item is-done';
+    li.querySelector('.file-item-label').innerHTML =
+      `<a href="${url}" target="_blank" rel="noopener">${name}</a>`;
+  }
+
+  function setFileRowError(id, name, message) {
+    const li = fileList.querySelector(`[data-id="${id}"]`);
+    if (!li) return;
+    li.className = 'file-item is-error';
+    li.querySelector('.file-item-label').textContent = `${name} — ${message}`;
+  }
+
+  fileList.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.file-item-remove');
+    if (!btn) return;
+    const li = btn.closest('.file-item');
+    const id = li.dataset.id;
+    uploadedFiles = uploadedFiles.filter(f => f.id !== id);
+    li.remove();
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const files = Array.from(fileInput.files);
+    fileInput.value = ''; // permite volver a elegir el mismo archivo si hace falta
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      bannerErrorText.textContent = 'La base de datos todavía no está configurada, no se pueden subir archivos todavía.';
+      bannerError.classList.add('show');
+      return;
+    }
+
+    for (const file of files) {
+      const id = crypto.randomUUID();
+
+      if (file.size > MAX_FILE_MB * 1024 * 1024) {
+        addFileRow(id, file.name);
+        setFileRowError(id, file.name, `supera ${MAX_FILE_MB} MB`);
+        continue;
+      }
+
+      addFileRow(id, file.name);
+      const path = `${id}-${file.name}`;
+
+      try {
+        const { error: uploadError } = await supabase.storage.from(FILES_BUCKET).upload(path, file);
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from(FILES_BUCKET).getPublicUrl(path);
+        uploadedFiles.push({ id, name: file.name, url: data.publicUrl });
+        setFileRowDone(id, file.name, data.publicUrl);
+      } catch (err) {
+        setFileRowError(id, file.name, err.message || 'no se pudo subir');
+      }
+    }
+  });
+
+  function buildRecursosClave() {
+    const manual = form.recursos_clave.value.trim();
+    const archivos = uploadedFiles.map(f => `Archivo: ${f.name} — ${f.url}`).join('\n');
+    return [manual, archivos].filter(Boolean).join('\n');
+  }
+
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     bannerError.classList.remove('show');
@@ -493,7 +591,7 @@
       preferencias_otro: form.preferencias_otro.value.trim(),
       elementos_marca: checkedValues('elementos_marca'),
       informacion_adicional: form.informacion_adicional.value.trim(),
-      recursos_clave: form.recursos_clave.value.trim(),
+      recursos_clave: buildRecursosClave(),
       estado: 'Nuevo',
     };
 
@@ -525,6 +623,8 @@
     selectedDates.clear();
     calendarPopover.hidden = true;
     updateSummary();
+    uploadedFiles = [];
+    fileList.innerHTML = '';
   });
 
   updateSummary();
